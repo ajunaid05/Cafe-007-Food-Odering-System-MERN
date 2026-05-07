@@ -1,0 +1,215 @@
+.menu-item-card {
+  background: rgba(13, 21, 18, 0.8);
+  backdrop-filter: blur(10px);
+  border-radius: 0;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: fadeInUp 0.5s ease-out;
+  border: 1px solid var(--border-gold-light);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+}
+
+.menu-item-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, var(--primary-gold), transparent);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.menu-item-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5), 0 0 30px var(--shadow-gold);
+  border-color: var(--primary-gold);
+}
+
+.menu-item-card:hover::before {
+  opacity: 1;
+}
+
+.card-image {
+  position: relative;
+  width: 100%;
+  height: 200px;
+  overflow: hidden;
+  background: var(--bg-dark-lighter);
+}
+
+.card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: brightness(0.9);
+}
+
+.menu-item-card:hover .card-image img {
+  transform: scale(1.1);
+  filter: brightness(1);
+}
+
+.placeholder-image {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3.5rem;
+  background: linear-gradient(135deg, var(--bg-dark-lighter) 0%, var(--bg-dark-light) 100%);
+  opacity: 0.5;
+}
+
+.unavailable-badge {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: rgba(199, 71, 71, 0.9);
+  color: var(--text-white);
+  padding: 8px 16px;
+  border-radius: 0;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.card-content {
+  padding: 30px;
+}
+
+.card-title {
+  font-family: var(--font-serif);
+  font-size: 1.4rem;
+  font-weight: 500;
+  color: var(--text-white);
+  margin-bottom: 10px;
+  letter-spacing: 1px;
+  text-transform: capitalize;
+}
+
+.card-description {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  color: var(--text-gray);
+  margin-bottom: 20px;
+  line-height: 1.7;
+  min-height: 45px;
+  letter-spacing: 0.5px;
+}
+
+.card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.card-price {
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--primary-gold);
+  letter-spacing: 1px;
+}
+
+.card-category {
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  color: var(--text-gray);
+  text-transform: capitalize;
+  letter-spacing: 1px;
+}
+
+.card-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-edit,
+.btn-delete {
+  padding: 10px 20px;
+  border: 1px solid var(--border-gold-light);
+  background: transparent;
+  color: var(--text-gray);
+  border-radius: 0;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.4s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-edit::before,
+.btn-delete::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  transition: left 0.4s ease;
+  z-index: 0;
+}
+
+.btn-edit::before {
+  background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-gold-light) 100%);
+}
+
+.btn-delete::before {
+  background: rgba(199, 71, 71, 0.8);
+}
+
+.btn-edit:hover,
+.btn-delete:hover {
+  color: var(--text-white);
+  border-color: transparent;
+  transform: translateY(-2px);
+}
+
+.btn-edit:hover::before,
+.btn-delete:hover::before {
+  left: 0;
+}
+
+.btn-edit span,
+.btn-delete span {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 768px) {
+  .card-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .card-actions {
+    width: 100%;
+  }
+  
+  .btn-edit,
+  .btn-delete {
+    flex: 1;
+    text-align: center;
+  }
+}

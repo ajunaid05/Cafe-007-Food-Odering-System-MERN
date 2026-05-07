@@ -1,0 +1,516 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700&display=swap');
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmerGold {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(199, 168, 120, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(199, 168, 120, 0.5);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.user-menu {
+  min-height: 100vh;
+  background: #0a0e0d;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Luxurious wood texture background */
+.user-menu::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(199, 168, 120, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(199, 168, 120, 0.03) 0%, transparent 50%),
+    linear-gradient(135deg, #0d1512 0%, #141f1a 50%, #0a120f 100%);
+  z-index: 0;
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+/* Elegant decorative lines */
+.user-menu::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  height: 100%;
+  background: linear-gradient(180deg, 
+    transparent 0%, 
+    rgba(199, 168, 120, 0.1) 20%, 
+    rgba(199, 168, 120, 0.2) 50%, 
+    rgba(199, 168, 120, 0.1) 80%, 
+    transparent 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Premium header with split design */
+.user-header {
+  position: sticky;
+  top: 0;
+  background: linear-gradient(180deg, rgba(10, 14, 13, 0.98) 0%, rgba(13, 21, 18, 0.95) 100%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(199, 168, 120, 0.2);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  animation: fadeInDown 1s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform;
+  transform: translateZ(0);
+}
+
+.header-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 25px 60px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+}
+
+/* Decorative gold line above header */
+.header-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 150px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #c7a878, transparent);
+  box-shadow: 0 0 15px rgba(199, 168, 120, 0.5);
+}
+
+.header-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.8rem;
+  font-weight: 400;
+  color: #ffffff;
+  margin: 0;
+  letter-spacing: 8px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  position: relative;
+  animation: fadeInUp 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.header-title::before {
+  content: '';
+  width: 50px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #c7a878);
+}
+
+.header-title::after {
+  display: none;
+}
+
+.home-link {
+  color: #ffffff;
+  text-decoration: none;
+  padding: 12px 28px;
+  background: linear-gradient(135deg, #c7a878 0%, #d4b88d 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 6px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: 'Raleway', sans-serif;
+  font-weight: 500;
+  font-size: 0.85rem;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  box-shadow: 0 4px 15px rgba(199, 168, 120, 0.3);
+}
+
+.home-link::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #d4b88d 0%, #e8d4b0 100%);
+  opacity: 0;
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: -1;
+}
+
+.home-link::after {
+  content: '';
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-left: 10px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230a0e0d'%3E%3Cpath d='M10 9V5l-7 7 7 7v-4.1c5 0 8.5 1.6 11 5.1-1-5-4-10-11-11z'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
+  transition: transform 0.3s ease;
+}
+
+.home-link:hover::before {
+  opacity: 1;
+}
+
+.home-link:hover::after {
+  transform: translateX(-3px);
+}
+
+.home-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(199, 168, 120, 0.5);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.home-link:hover::after {
+  transform: translateX(-4px);
+}
+
+/* Sophisticated navigation bar */
+.user-nav {
+  background: rgba(13, 21, 18, 0.6);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  gap: 0;
+  position: relative;
+  z-index: 99;
+  border-top: 1px solid rgba(199, 168, 120, 0.1);
+  border-bottom: 1px solid rgba(199, 168, 120, 0.1);
+  animation: fadeInDown 1s cubic-bezier(0.4, 0, 0.2, 1) 0.3s both;
+}
+
+/* Gold line underneath nav */
+.user-nav::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    #c7a878 20%, 
+    #c7a878 80%, 
+    transparent 100%);
+  opacity: 0.3;
+}
+
+.nav-link {
+  padding: 22px 50px;
+  text-decoration: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-family: 'Raleway', sans-serif;
+  font-weight: 400;
+  font-size: 0.9rem;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  background: transparent;
+  border: none;
+  border-right: 1px solid rgba(199, 168, 120, 0.1);
+}
+
+.nav-link:last-child {
+  border-right: none;
+}
+
+/* Elegant underline effect */
+.nav-link::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, #c7a878, transparent);
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 15px rgba(199, 168, 120, 0.8);
+}
+
+/* Top decorative line */
+.nav-link::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 1px;
+  background: #c7a878;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-link:hover {
+  color: #ffffff;
+  background: rgba(199, 168, 120, 0.05);
+  letter-spacing: 5px;
+}
+
+.nav-link:hover::before {
+  width: 80%;
+}
+
+.nav-link:hover::after {
+  width: 60%;
+}
+
+.nav-link.active {
+  color: #c7a878;
+  background: linear-gradient(180deg, 
+    rgba(199, 168, 120, 0.08) 0%, 
+    rgba(199, 168, 120, 0.15) 50%, 
+    rgba(199, 168, 120, 0.08) 100%);
+  font-weight: 500;
+  letter-spacing: 5px;
+  animation: glow 3s ease-in-out infinite;
+}
+
+.nav-link.active::before {
+  width: 100%;
+  height: 4px;
+}
+
+.nav-link.active::after {
+  width: 80%;
+  background: linear-gradient(90deg, transparent, #c7a878, transparent);
+  box-shadow: 0 0 10px rgba(199, 168, 120, 0.6);
+}
+
+/* Luxurious main content area */
+.user-main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 50px 60px;
+  position: relative;
+  z-index: 10;
+  animation: fadeInUp 0.5s ease-out;
+  border-left: 1px solid rgba(199, 168, 120, 0.1);
+  border-right: 1px solid rgba(199, 168, 120, 0.1);
+}
+
+/* Decorative corner ornaments */
+.user-main::before {
+  content: '◆';
+  position: absolute;
+  top: 50px;
+  left: 30px;
+  color: rgba(199, 168, 120, 0.3);
+  font-size: 1.5rem;
+  animation: float 6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.user-main::after {
+  content: '◆';
+  position: absolute;
+  bottom: 50px;
+  right: 30px;
+  color: rgba(199, 168, 120, 0.3);
+  font-size: 1.5rem;
+  animation: float 6s ease-in-out infinite 3s;
+  pointer-events: none;
+}
+
+/* Custom scrollbar */
+.user-menu ::-webkit-scrollbar {
+  width: 12px;
+}
+
+.user-menu ::-webkit-scrollbar-track {
+  background: #0a0e0d;
+  border-left: 1px solid rgba(199, 168, 120, 0.1);
+}
+
+.user-menu ::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #c7a878 0%, #b8956a 100%);
+  border-radius: 0;
+  border: 2px solid #0a0e0d;
+}
+
+.user-menu ::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #d4b88d 0%, #c7a878 100%);
+  box-shadow: 0 0 10px rgba(199, 168, 120, 0.5);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .header-content {
+    padding: 25px 40px;
+  }
+
+  .header-title {
+    font-size: 2.2rem;
+    letter-spacing: 6px;
+  }
+
+  .nav-link {
+    padding: 20px 40px;
+    font-size: 0.85rem;
+  }
+
+  .user-main {
+    padding: 35px 30px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    gap: 25px;
+    padding: 25px 30px;
+  }
+  
+  .header-title {
+    font-size: 1.8rem;
+    letter-spacing: 4px;
+    flex-direction: column;
+    text-align: center;
+    gap: 10px;
+  }
+
+  .header-title::before {
+    display: none;
+  }
+
+  .header-title::after {
+    font-size: 1.8rem;
+  }
+
+  .home-link {
+    padding: 12px 28px;
+    font-size: 0.8rem;
+  }
+  
+  .user-nav {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .nav-link {
+    padding: 18px 30px;
+    font-size: 0.85rem;
+    letter-spacing: 3px;
+    text-align: center;
+    border-right: none;
+    border-bottom: 1px solid rgba(199, 168, 120, 0.1);
+  }
+
+  .nav-link:last-child {
+    border-bottom: none;
+  }
+
+  .nav-link::before,
+  .nav-link::after {
+    display: none;
+  }
+
+  .user-main {
+    padding: 30px 25px;
+  }
+
+  .user-main::before {
+    top: 30px;
+    left: 20px;
+    font-size: 1.2rem;
+  }
+
+  .user-main::after {
+    bottom: 30px;
+    right: 20px;
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-content {
+    padding: 20px;
+  }
+
+  .header-title {
+    font-size: 1.4rem;
+    letter-spacing: 3px;
+  }
+
+  .home-link {
+    padding: 10px 24px;
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+  }
+
+  .nav-link {
+    padding: 16px 20px;
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+  }
+
+  .user-main {
+    padding: 25px 20px;
+  }
+}

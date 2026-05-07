@@ -1,0 +1,216 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Raleway:wght@300;400;500;600;700&display=swap');
+
+.home-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--bg-dark);
+  position: relative;
+  overflow: hidden;
+}
+
+.home-container::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    radial-gradient(circle at 20% 30%, rgba(199, 168, 120, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(199, 168, 120, 0.03) 0%, transparent 50%),
+    linear-gradient(135deg, #0d1512 0%, #141f1a 50%, #0a120f 100%);
+  z-index: 0;
+}
+
+.home-container::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  height: 100%;
+  background: linear-gradient(180deg, 
+    transparent 0%, 
+    rgba(199, 168, 120, 0.1) 20%, 
+    rgba(199, 168, 120, 0.2) 50%, 
+    rgba(199, 168, 120, 0.1) 80%, 
+    transparent 100%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.home-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 80px 60px;
+  background: linear-gradient(180deg, rgba(10, 14, 13, 0.95) 0%, rgba(13, 21, 18, 0.98) 100%);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-gold);
+  border-radius: 0;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 40px var(--shadow-gold);
+  max-width: 700px;
+  width: 90%;
+  animation: fadeInUp 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Decorative corner elements */
+.home-content::before {
+  content: '◆';
+  position: absolute;
+  top: 30px;
+  left: 30px;
+  color: var(--primary-gold);
+  font-size: 1.2rem;
+  opacity: 0.5;
+  animation: float 6s ease-in-out infinite;
+}
+
+.home-content::after {
+  content: '◆';
+  position: absolute;
+  bottom: 30px;
+  right: 30px;
+  color: var(--primary-gold);
+  font-size: 1.2rem;
+  opacity: 0.5;
+  animation: float 6s ease-in-out infinite 3s;
+}
+
+.home-title {
+  font-family: var(--font-serif);
+  font-size: 3.5rem;
+  font-weight: 400;
+  color: var(--text-white);
+  margin-bottom: 20px;
+  letter-spacing: 12px;
+  text-transform: uppercase;
+  position: relative;
+  padding-bottom: 30px;
+}
+
+.home-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--primary-gold), transparent);
+  box-shadow: 0 0 20px var(--shadow-gold);
+}
+
+.home-subtitle {
+  font-family: var(--font-sans);
+  font-size: 1.1rem;
+  color: var(--text-gray);
+  margin-bottom: 60px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  font-weight: 300;
+}
+
+.home-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  justify-content: center;
+  align-items: center;
+}
+
+.home-btn {
+  padding: 18px 50px;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 500;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  border: 1px solid var(--border-gold);
+  background: transparent;
+  color: var(--text-white);
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  min-width: 280px;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.home-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-gold-light) 100%);
+  transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 0;
+}
+
+.home-btn:hover::before {
+  left: 0;
+}
+
+.home-btn span {
+  position: relative;
+  z-index: 1;
+}
+
+.home-btn:hover {
+  color: var(--text-white);
+  border-color: var(--primary-gold);
+  box-shadow: 0 8px 30px var(--shadow-gold);
+  transform: translateY(-3px);
+}
+
+
+@media (max-width: 768px) {
+  .home-content {
+    padding: 60px 40px;
+  }
+
+  .home-title {
+    font-size: 2.2rem;
+    letter-spacing: 8px;
+  }
+
+  .home-subtitle {
+    font-size: 0.95rem;
+    letter-spacing: 3px;
+  }
+
+  .home-btn {
+    min-width: 100%;
+    padding: 16px 40px;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-content {
+    padding: 50px 30px;
+  }
+
+  .home-title {
+    font-size: 1.8rem;
+    letter-spacing: 6px;
+  }
+
+  .home-subtitle {
+    font-size: 0.85rem;
+  }
+
+  .home-btn {
+    padding: 14px 30px;
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+  }
+}
