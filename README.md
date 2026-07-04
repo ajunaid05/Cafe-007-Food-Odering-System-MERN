@@ -45,18 +45,16 @@ A simple and elegant food ordering system for a single restaurant built with MER
 ## 🛠️ Tech Stack
 
 ### Backend
-- **Node.js** - JavaScript runtime
-- **Express.js** - Web framework
-- **MongoDB** - Database
-- **Mongoose** - MongoDB object modeling
-- **CORS** - Cross-origin resource sharing
-- **dotenv** - Environment variable management
+- **Node.js** / **Express.js**
+- **MongoDB** / **Mongoose**
+- **JWT** + **bcrypt** — user & owner authentication
+- **Stripe** — card payments (optional)
+- **Nodemailer** — password reset emails (optional)
 
 ### Frontend
-- **React** - UI library
-- **React Router DOM** - Client-side routing
-- **Axios** - HTTP client
-- **CSS3** - Styling with animations and effects
+- **React** / **React Router**
+- **Axios** — API client with JWT interceptor
+- **Stripe Elements** — checkout UI
 
 ## 📁 Project Structure
 
@@ -122,18 +120,20 @@ food-ordering/
    ```
 
 3. **Set up environment variables**:
-   - Create a `.env` file in the backend directory (already created)
-   - Update MongoDB connection string if needed:
-     ```
-     PORT=5000
-     MONGODB_URI=mongodb://localhost:27017/foodordering
-     ```
-   - For MongoDB Atlas, use:
-     ```
-     MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/foodordering
-     ```
+   ```bash
+   cp .env.example .env
+   ```
+   Required: `MONGODB_URI`, `JWT_SECRET`, `FRONTEND_URL`  
+   Owner account: set `OWNER_EMAIL` / `OWNER_PASSWORD`, then run `node seedOwner.js`  
+   Payments (optional): `STRIPE_SECRET_KEY`, `STRIPE_CURRENCY` (`pkr` or `usd`)  
+   Email reset (optional): `EMAIL_USER`, `EMAIL_PASS`
 
-4. **Start MongoDB** (if using local MongoDB):
+4. **Create owner account** (first time):
+   ```bash
+   node seedOwner.js
+   ```
+
+5. **Start MongoDB** (if using local MongoDB):
    ```bash
    # Windows
    net start MongoDB
@@ -142,7 +142,7 @@ food-ordering/
    sudo systemctl start mongod
    ```
 
-5. **Start the backend server**:
+6. **Start the backend server**:
    ```bash
    npm start
    # OR for development with auto-reload
@@ -163,7 +163,13 @@ food-ordering/
    npm install
    ```
 
-3. **Start the React development server**:
+3. **Environment**:
+   ```bash
+   cp .env.example .env
+   ```
+   Set `REACT_APP_API_URL` and `REACT_APP_STRIPE_PUBLISHABLE_KEY` if using payments.
+
+4. **Start the React development server**:
    ```bash
    npm start
    ```
@@ -175,8 +181,7 @@ food-ordering/
 ### For Restaurant Owners
 
 1. **Access Owner Dashboard**:
-   - Go to the home page
-   - Click on "Owner Dashboard"
+   - Home → **Owner** → login with seeded owner credentials
 
 2. **Manage Menu Items**:
    - Navigate to "Menu Management"
@@ -190,11 +195,7 @@ food-ordering/
    - Navigate to "Orders Management"
    - View all customer orders
    - Use status filters to see orders by status
-   - Update order status:
-     - Pending → Confirm
-     - Confirmed → Start Preparing
-     - Preparing → Mark Ready
-     - Ready → Mark Delivered
+   - Update order status: Pending → Confirmed → (customer pays) → Paid → Delivered
    - Cancel orders if needed
 
 ### For Customers
@@ -359,7 +360,15 @@ This is a learning project. Feel free to fork and modify as needed.
 
 For issues or questions, please check the code comments or MongoDB/Express/React documentation.
 
+## 🔒 Security
+
+- API routes enforce JWT authentication and role checks (`user` vs `owner`).
+- Orders are scoped per user; only owners see all orders.
+- Order status `paid` is set only after Stripe payment verification on the server.
+- Owner self-registration is disabled unless `ALLOW_OWNER_SIGNUP=true`.
+- Use a strong `JWT_SECRET` in production. Never commit `.env` files.
+
 ---
 
-**Note**: Make sure MongoDB is running before starting the backend server. The application uses local storage for cart management, so cart data persists across page refreshes but is user-specific.
+**Note**: MongoDB must be running before the backend starts. Cart data is stored in `localStorage` per browser. Existing orders created before the `userId` field was added will not appear in user order history.
 

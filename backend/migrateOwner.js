@@ -6,49 +6,38 @@ const Owner = require('./models/Owner');
 dotenv.config();
 
 async function migrateOwner() {
+  const email = process.env.OWNER_EMAIL;
+  const plainPassword = process.env.OWNER_PASSWORD;
+
+  if (!email || !plainPassword) {
+    console.error('Set OWNER_EMAIL and OWNER_PASSWORD in backend/.env before running this script.');
+    process.exit(1);
+  }
+
   try {
-    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/foodordering', {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/foodordering');
 
-    // Your existing owner credentials
-    const email = 'ahmadjunaid007.07@gmail.com';
-    const plainPassword = 'Daoud@123';
+    let owner = await Owner.findOne({ email: email.toLowerCase() });
 
-    // Check if owner already exists
-    let owner = await Owner.findOne({ email });
-    
+    const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
     if (owner) {
-      console.log('Owner already exists. Updating password...');
-      // Hash the plain password
-      const hashedPassword = await bcrypt.hash(plainPassword, 10);
       owner.password = hashedPassword;
       await owner.save();
-      console.log('Owner password updated successfully!');
+      console.log('Owner password updated for:', email.toLowerCase());
     } else {
-      console.log('Creating new owner...');
-      // Hash the plain password
-      const hashedPassword = await bcrypt.hash(plainPassword, 10);
-      owner = new Owner({ 
-        email: email.toLowerCase(), 
-        password: hashedPassword 
+      owner = await Owner.create({
+        email: email.toLowerCase(),
+        password: hashedPassword,
       });
-      await owner.save();
-      console.log('Owner created successfully!');
+      console.log('Owner created:', owner.email);
     }
-
-    console.log('\nOwner credentials:');
-    console.log('Email:', email);
-    console.log('Password:', plainPassword);
-    console.log('\nYou can now login with these credentials.');
 
     process.exit(0);
   } catch (err) {
-    console.error('Error migrating owner:', err);
+    console.error('Error migrating owner:', err.message);
     process.exit(1);
   }
 }
 
 migrateOwner();
-

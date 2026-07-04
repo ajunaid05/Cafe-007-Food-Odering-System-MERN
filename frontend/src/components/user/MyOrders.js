@@ -13,17 +13,12 @@ const MyOrders = () => {
 
   useEffect(() => {
     fetchOrders();
-
-    // CHANGE THIS LINE: Pass 'true'
     const interval = setInterval(() => fetchOrders(true), 5000);
-
     return () => clearInterval(interval);
   }, [statusFilter]);
 
-  // CHANGE THIS LINE: Add (isBackground = false)
   const fetchOrders = async (isBackground = false) => {
     try {
-      // CHANGE THIS LINE: Only show loading if NOT background
       if (!isBackground) setLoading(true);
 
       const params = statusFilter !== 'all' ? { status: statusFilter } : {};
@@ -33,7 +28,6 @@ const MyOrders = () => {
       console.error('Error fetching orders:', error);
       if (!isBackground) alert('Failed to load orders');
     } finally {
-      // CHANGE THIS LINE: Only hide loading if we showed it
       if (!isBackground) setLoading(false);
     }
   };

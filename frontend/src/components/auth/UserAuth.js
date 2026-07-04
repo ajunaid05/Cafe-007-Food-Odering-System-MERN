@@ -19,6 +19,10 @@ const UserAuth = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (form.password.length < 6) {
+      alert('Password must be at least 6 characters long');
+      return;
+    }
     setLoading(true);
     try {
       if (mode === 'signup') {

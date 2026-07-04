@@ -1,16 +1,27 @@
-import React, { useState } from 'react';
-import { Routes, Route, NavLink } from 'react-router-dom';
+import React, { useContext } from 'react';
+import { Routes, Route, NavLink, useNavigate } from 'react-router-dom';
 import MenuManagement from './MenuManagement';
 import OrdersManagement from './OrdersManagement';
+import { AuthContext } from '../../context/AuthContext';
 import './OwnerDashboard.css';
 
 const OwnerDashboard = () => {
+  const { logout } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
   return (
     <div className="owner-dashboard">
       <header className="owner-header">
         <div className="header-content">
           <h1 className="header-title"> Owner Dashboard</h1>
-          <NavLink to="/" className="home-link">Logout</NavLink>
+          <button type="button" className="home-link" onClick={handleLogout}>
+            Logout
+          </button>
         </div>
       </header>
       

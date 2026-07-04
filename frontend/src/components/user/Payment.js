@@ -2,50 +2,47 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { paymentAPI, orderAPI } from '../../services/api';
+import { paymentAPI } from '../../services/api';
+import { useCart } from '../../context/CartContext';
 import './Payment.css';
 
-// Check if publishable key is set
 if (!process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY) {
-  console.error('❌ ERROR: REACT_APP_STRIPE_PUBLISHABLE_KEY is not set!');
-  console.error('Please add REACT_APP_STRIPE_PUBLISHABLE_KEY to your .env file');
+  console.warn('REACT_APP_STRIPE_PUBLISHABLE_KEY is not set — payments will not work.');
 }
 
-// Initialize Stripe with publishable key
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
+const stripePromise = process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY
+  ? loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY)
+  : null;
 
-const PaymentForm = ({ amount, cart, onSuccess, orderId }) => {
+const PaymentForm = ({ amount, orderId, onSuccess }) => {
   const stripe = useStripe();
   const elements = useElements();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [clientSecret, setClientSecret] = useState('');
+  const [paymentIntentId, setPaymentIntentId] = useState('');
   const [error, setError] = useState('');
 
   useEffect(() => {
-    // Create payment intent when component mounts
     const createIntent = async () => {
+      if (!orderId || amount <= 0) return;
       try {
-        console.log('Creating payment intent for amount:', amount);
-        const response = await paymentAPI.createPaymentIntent({ amount });
+        const response = await paymentAPI.createPaymentIntent({ amount, orderId });
         setClientSecret(response.data.clientSecret);
-        console.log('✅ Payment intent created successfully');
+        setPaymentIntentId(response.data.paymentIntentId);
       } catch (err) {
         const errorMessage = err.response?.data?.message || 'Failed to initialize payment. Please try again.';
         setError(errorMessage);
-        console.error('❌ Payment intent error:', err.response?.data || err.message);
       }
     };
 
-    if (amount > 0) {
-      createIntent();
-    }
-  }, [amount]);
+    createIntent();
+  }, [amount, orderId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!stripe || !elements || !clientSecret) {
+    if (!stripe || !elements || !clientSecret || !orderId) {
       setError('Payment system not ready. Please wait...');
       return;
     }
@@ -56,61 +53,32 @@ const PaymentForm = ({ amount, cart, onSuccess, orderId }) => {
     try {
       const cardElement = elements.getElement(CardElement);
 
-      console.log('Processing payment...');
-
-      // Confirm payment with Stripe
       const { error: stripeError, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: {
-          card: cardElement,
-        }
+        payment_method: { card: cardElement },
       });
 
       if (stripeError) {
         setError(stripeError.message || 'Payment failed');
-        console.error('❌ Stripe error:', stripeError);
         setLoading(false);
         return;
       }
 
       if (paymentIntent.status === 'succeeded') {
-        console.log('✅ Payment succeeded:', paymentIntent.id);
+        await paymentAPI.verifyPayment({
+          paymentIntentId: paymentIntent.id || paymentIntentId,
+          orderId,
+        });
 
-        try {
-          if (orderId) {
-            // Update existing order status to 'paid'
-            await orderAPI.updateStatus(orderId, 'paid');
-            console.log('✅ Order status updated to paid');
-          } else {
-            // Legacy: Create new order if no orderId
-            const orderData = {
-              items: cart.map(item => ({
-                menuItemId: item.menuItemId,
-                quantity: item.quantity,
-                price: item.price
-              })),
-              totalAmount: amount
-            };
-            const orderResponse = await orderAPI.create(orderData);
-            console.log('✅ Order created:', orderResponse.data);
-            localStorage.removeItem('cart');
-          }
-
-          // Call success callback
-          if (onSuccess) {
-            onSuccess();
-          }
-
-          // Show success message and navigate
-          alert('Payment successful!');
-          navigate('/user/orders');
-        } catch (orderError) {
-          setError('Payment successful but failed to update order status. Please contact support.');
-          console.error('❌ Order update error:', orderError.response?.data || orderError.message);
+        if (onSuccess) {
+          onSuccess();
         }
+
+        alert('Payment successful!');
+        navigate('/user/orders');
       }
     } catch (err) {
-      setError('An error occurred during payment. Please try again.');
-      console.error('❌ Payment error:', err);
+      const msg = err.response?.data?.message || 'An error occurred during payment. Please try again.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -147,11 +115,7 @@ const PaymentForm = ({ amount, cart, onSuccess, orderId }) => {
         </div>
       </div>
 
-      {error && (
-        <div className="payment-error">
-          {error}
-        </div>
-      )}
+      {error && <div className="payment-error">{error}</div>}
 
       <button
         type="submit"
@@ -172,44 +136,28 @@ const PaymentForm = ({ amount, cart, onSuccess, orderId }) => {
 const Payment = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { clearCart } = useCart();
   const [cart, setCart] = useState([]);
   const [totalAmount, setTotalAmount] = useState(0);
   const [orderId, setOrderId] = useState(null);
 
   useEffect(() => {
-    // Check if coming from "Pay Now" button with existing order
-    if (location.state && location.state.orderId) {
-      const { orderId, amount, items } = location.state;
-      console.log('Payment for existing order:', orderId, amount);
-      setOrderId(orderId);
+    if (location.state?.orderId) {
+      const { orderId: id, amount, items } = location.state;
+      setOrderId(id);
       setTotalAmount(amount);
-      setCart(items || []); // Just for display
+      setCart(items || []);
       return;
     }
 
-    // Fallback: Get cart from localStorage (Legacy)
-    const savedCart = localStorage.getItem('cart');
-    if (savedCart) {
-      try {
-        const parsedCart = JSON.parse(savedCart);
-        setCart(parsedCart);
-
-        // Calculate total
-        const total = parsedCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        setTotalAmount(total);
-        console.log('Cart loaded:', parsedCart.length, 'items, Total:', total);
-      } catch (error) {
-        console.error('Error parsing cart:', error);
-        navigate('/user/cart');
-      }
-    } else {
-      // No cart found, redirect to cart
-      console.log('No cart found, redirecting...');
-      // navigate('/user/cart');
-    }
+    navigate('/user/orders', { replace: true });
   }, [navigate, location]);
 
-  if ((cart.length === 0 && !orderId) || totalAmount === 0) {
+  const handlePaymentSuccess = () => {
+    clearCart();
+  };
+
+  if (!orderId || totalAmount <= 0) {
     return (
       <div className="payment-container">
         <div className="payment-loading">Loading...</div>
@@ -217,15 +165,23 @@ const Payment = () => {
     );
   }
 
-  const handlePaymentSuccess = () => {
-    // Navigation handled in PaymentForm
-    console.log('Payment successful');
-  };
+  if (!stripePromise) {
+    return (
+      <div className="payment-container">
+        <div className="payment-error">
+          Payment is not configured. Set REACT_APP_STRIPE_PUBLISHABLE_KEY in frontend/.env
+        </div>
+        <button type="button" className="btn-cancel" onClick={() => navigate('/user/orders')}>
+          Back to Orders
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="payment-container">
       <div className="payment-card">
-        <h2>Payment {orderId ? `#${orderId.slice(-6)}` : ''}</h2>
+        <h2>Payment #{orderId.slice(-6)}</h2>
 
         <div className="order-summary">
           <h3>Order Summary</h3>
@@ -244,16 +200,12 @@ const Payment = () => {
         <Elements stripe={stripePromise}>
           <PaymentForm
             amount={totalAmount}
-            cart={cart}
-            onSuccess={handlePaymentSuccess}
             orderId={orderId}
+            onSuccess={handlePaymentSuccess}
           />
         </Elements>
 
-        <button
-          className="btn-cancel"
-          onClick={() => navigate('/user/orders')}
-        >
+        <button type="button" className="btn-cancel" onClick={() => navigate('/user/orders')}>
           Cancel
         </button>
       </div>

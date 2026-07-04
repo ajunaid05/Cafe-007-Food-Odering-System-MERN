@@ -20,14 +20,32 @@ export const AuthProvider = ({ children }) => {
     }
   }, [auth]);
 
-  const login = (data) => setAuth(data);
+  const login = (data) => {
+    if (data.user) {
+      setAuth({
+        token: data.token,
+        role: 'user',
+        user: data.user,
+      });
+    } else if (data.owner) {
+      setAuth({
+        token: data.token,
+        role: 'owner',
+        owner: data.owner,
+      });
+    } else {
+      setAuth(data);
+    }
+  };
+
   const logout = () => setAuth(null);
 
+  const isUser = () => auth?.role === 'user' && !!auth?.token;
+  const isOwner = () => auth?.role === 'owner' && !!auth?.token;
+
   return (
-    <AuthContext.Provider value={{ auth, login, logout }}>
+    <AuthContext.Provider value={{ auth, login, logout, isUser, isOwner }}>
       {children}
     </AuthContext.Provider>
   );
 };
-
-

@@ -8,6 +8,7 @@ import UserAuth from './components/auth/UserAuth';
 import OwnerLogin from './components/auth/OwnerLogin';
 import ForgotPassword from './components/auth/ForgotPassword';
 import ResetPassword from './components/auth/ResetPassword';
+import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
 // Disable browser's scroll restoration
@@ -22,8 +23,22 @@ function App() {
       <div className="App">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/owner/*" element={<OwnerDashboard />} />
-          <Route path="/user/*" element={<UserMenu />} />
+          <Route
+            path="/owner/*"
+            element={
+              <ProtectedRoute role="owner">
+                <OwnerDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/user/*"
+            element={
+              <ProtectedRoute role="user">
+                <UserMenu />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Auth routes */}
           <Route path="/user-auth" element={<UserAuth />} />

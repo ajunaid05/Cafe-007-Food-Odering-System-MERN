@@ -11,6 +11,8 @@ const router = express.Router();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_key_change_me';
 
+const normalizeEmail = (email) => String(email).trim().toLowerCase();
+
 // User signup
 router.post('/user/signup', async (req, res) => {
   try {
@@ -20,13 +22,18 @@ router.post('/user/signup', async (req, res) => {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
-    const existing = await User.findOne({ email });
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+    }
+
+    const emailNorm = normalizeEmail(email);
+    const existing = await User.findOne({ email: emailNorm });
     if (existing) {
       return res.status(400).json({ message: 'Email already in use' });
     }
 
     const hashed = await bcrypt.hash(password, 10);
-    await User.create({ name, email, password: hashed });
+    await User.create({ name, email: emailNorm, password: hashed });
 
     res.status(201).json({ message: 'User created successfully' });
   } catch (error) {
@@ -39,7 +46,7 @@ router.post('/user/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: normalizeEmail(email) });
     if (!user) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
@@ -67,8 +74,12 @@ router.post('/user/login', async (req, res) => {
   }
 });
 
-// Owner signup/registration
+// Owner signup — disabled by default (set ALLOW_OWNER_SIGNUP=true to enable)
 router.post('/owner/signup', async (req, res) => {
+  // if (process.env.ALLOW_OWNER_SIGNUP !== 'true') {
+  //   return res.status(403).json({ message: 'Owner registration is disabled' });
+  // }
+
   try {
     const { email, password } = req.body;
 
@@ -155,18 +166,7 @@ router.post('/owner/login', async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // Try bcrypt compare first (for hashed passwords)
-    let isMatch = await bcrypt.compare(password, owner.password);
-    
-    // If bcrypt fails, check if password is stored as plain text (for migration)
-    // This allows existing plain text passwords to work temporarily
-    if (!isMatch && owner.password === password) {
-      // Password is plain text - hash it and save for future logins
-      console.log('Migrating plain text password to hashed for:', email);
-      owner.password = await bcrypt.hash(password, 10);
-      await owner.save();
-      isMatch = true;
-    }
+    const isMatch = await bcrypt.compare(password, owner.password);
 
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid credentials' });
@@ -192,6 +192,7 @@ router.post('/owner/login', async (req, res) => {
 
 // User forgot password
 router.post('/user/forgot-password', async (req, res) => {
+  let user = null; // Declared outside try so it's accessible in catch
   try {
     const { email } = req.body;
 
@@ -199,7 +200,7 @@ router.post('/user/forgot-password', async (req, res) => {
       return res.status(400).json({ message: 'Email is required' });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    user = await User.findOne({ email: normalizeEmail(email) });
     if (!user) {
       // For security, respond as if it worked
       return res.json({ message: 'If this email exists, a reset link has been sent' });
@@ -237,9 +238,6 @@ router.post('/user/forgot-password', async (req, res) => {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS, // Must be App Password for Gmail
       },
-      tls: {
-        rejectUnauthorized: false
-      }
     });
 
     // Verify transporter configuration before sending
@@ -313,6 +311,10 @@ router.post('/user/reset-password/:token', async (req, res) => {
   try {
     const { token } = req.params;
     const { password } = req.body;
+
+    if (!password || password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+    }
 
     const user = await User.findOne({
       resetPasswordToken: token,

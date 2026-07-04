@@ -11,6 +11,10 @@ const ResetPassword = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (password.length < 6) {
+      alert('Password must be at least 6 characters long');
+      return;
+    }
     setLoading(true);
     try {
       await authAPI.resetPassword(token, { password });
@@ -36,6 +40,7 @@ const ResetPassword = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              minLength={6}
             />
           </div>
           <button type="submit" className="auth-submit" disabled={loading}>

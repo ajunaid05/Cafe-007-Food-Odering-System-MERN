@@ -1,45 +1,30 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { menuAPI } from '../../services/api';
 import MenuItemCard from './MenuItemCard';
 import './MenuView.css';
 import { AuthContext } from '../../context/AuthContext';
+import { useCart } from '../../context/CartContext';
 
 const MenuView = () => {
   const [menuItems, setMenuItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
-  const [cart, setCart] = useState(() => {
-    const savedCart = localStorage.getItem('cart');
-    return savedCart ? JSON.parse(savedCart) : [];
-  });
 
   const { auth } = useContext(AuthContext);
+  const { addToCart } = useCart();
   const navigate = useNavigate();
 
   const categories = ['all', 'fast food', 'desi', 'desert', 'cold drinks', 'hot drinks', 'snacks'];
 
-  useEffect(() => {
-    fetchMenuItems();
-    const interval = setInterval(fetchMenuItems, 10000);
-    return () => clearInterval(interval);
-  }, [selectedCategory, searchTerm]);
-
-  useEffect(() => {
-    console.log('Saving cart to localStorage:', cart); // Debug log
-    localStorage.setItem('cart', JSON.stringify(cart));
-    // Dispatch custom event to notify other components
-    window.dispatchEvent(new Event('cartUpdated'));
-  }, [cart]);
-
-  const fetchMenuItems = async () => {
+  const fetchMenuItems = useCallback(async () => {
     try {
       setLoading(true);
       const params = { available: 'true' };
       if (selectedCategory !== 'all') params.category = selectedCategory;
       if (searchTerm) params.search = searchTerm;
-      
+
       const response = await menuAPI.getAll(params);
       setMenuItems(response.data);
     } catch (error) {
@@ -48,51 +33,30 @@ const MenuView = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [selectedCategory, searchTerm]);
 
-  const addToCart = (item) => {
+  useEffect(() => {
+    fetchMenuItems();
+    const interval = setInterval(fetchMenuItems, 10000);
+    return () => clearInterval(interval);
+  }, [fetchMenuItems]);
+
+  const handleAddToCart = (item) => {
     // Require login to add to cart
-    if (!auth || !auth.user) {
+    if (!auth || auth.role !== 'user') {
       alert('Please login or signup to add items to cart.');
       navigate('/user-auth');
       return;
     }
 
-    setCart((prevCart) => {
-      const existingItem = prevCart.find(
-        (cartItem) => cartItem.menuItemId === item._id
-      );
+    addToCart(item);
 
-      let newCart;
-      if (existingItem) {
-        newCart = prevCart.map((cartItem) =>
-          cartItem.menuItemId === item._id
-            ? { ...cartItem, quantity: cartItem.quantity + 1 }
-            : cartItem
-        );
-      } else {
-        newCart = [
-          ...prevCart,
-          {
-            menuItemId: item._id,
-            name: item.name,
-            price: item.price,
-            image: item.image,
-            quantity: 1,
-          },
-        ];
-      }
-
-      return newCart;
-    });
-
+    // Show brief notification
     const notification = document.createElement('div');
     notification.className = 'cart-notification';
     notification.textContent = `${item.name} added to cart!`;
     document.body.appendChild(notification);
-    setTimeout(() => {
-      notification.classList.add('show');
-    }, 10);
+    setTimeout(() => notification.classList.add('show'), 10);
     setTimeout(() => {
       notification.classList.remove('show');
       setTimeout(() => document.body.removeChild(notification), 300);
@@ -137,7 +101,7 @@ const MenuView = () => {
               <MenuItemCard
                 key={item._id}
                 item={item}
-                onAddToCart={addToCart}
+                onAddToCart={handleAddToCart}
               />
             ))
           )}

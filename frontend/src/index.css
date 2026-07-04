@@ -30,13 +30,12 @@ html {
   -webkit-overflow-scrolling: touch;
 }
 
-html, body {
+body {
   overflow-x: hidden;
 }
 
 body {
   overflow-y: auto;
-  overscroll-behavior-y: contain;
 }
 
 body {

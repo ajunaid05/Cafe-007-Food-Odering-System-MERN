@@ -85,6 +85,11 @@
   text-transform: uppercase;
 }
 
+button.home-link {
+  cursor: pointer;
+  font: inherit;
+}
+
 .home-link {
   color: var(--text-white);
   text-decoration: none;

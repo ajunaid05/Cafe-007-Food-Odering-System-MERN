@@ -8,19 +8,22 @@ dotenv.config();
 
 const app = express();
 
+// Stripe webhook must receive raw body (before express.json)
+app.use('/api/payment/webhook', require('./routes/stripeWebhook'));
+
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true,
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/foodordering', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('MongoDB Connected Successfully'))
-.catch(err => console.error('MongoDB Connection Error:', err));
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/foodordering')
+  .then(() => console.log('MongoDB Connected Successfully'))
+  .catch((err) => console.error('MongoDB Connection Error:', err));
 
 // Routes
 app.use('/api/menu', require('./routes/menuRoutes'));
@@ -37,4 +40,3 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
-

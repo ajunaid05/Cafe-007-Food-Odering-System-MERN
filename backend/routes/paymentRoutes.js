@@ -1,117 +1,149 @@
 const express = require('express');
 const router = express.Router();
+const Order = require('../models/Order');
+const { authenticate, requireRole } = require('../middleware/auth');
 
-// Load Stripe with secret key from environment variable
-if (!process.env.STRIPE_SECRET_KEY) {
-  console.error('❌ ERROR: STRIPE_SECRET_KEY is not set in environment variables!');
-  console.error('Please add STRIPE_SECRET_KEY to your .env file');
-  throw new Error('Stripe secret key is required');
-}
+let stripe = null;
 
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const getStripe = () => {
+  if (!process.env.STRIPE_SECRET_KEY) {
+    return null;
+  }
+  if (!stripe) {
+    stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+  }
+  return stripe;
+};
 
-// Create payment intent
-router.post('/create-payment-intent', async (req, res) => {
+// Convert PKR (Rs.) display amount to Stripe smallest currency unit
+const toStripeAmount = (amountPkr) => {
+  const currency = (process.env.STRIPE_CURRENCY || 'pkr').toLowerCase();
+  if (currency === 'usd') {
+    const rate = parseFloat(process.env.STRIPE_PKR_TO_USD_RATE || '0.0036');
+    return Math.max(50, Math.round(amountPkr * rate * 100));
+  }
+  return Math.max(100, Math.round(amountPkr * 100));
+};
+
+const getStripeCurrency = () => (process.env.STRIPE_CURRENCY || 'pkr').toLowerCase();
+
+// Create payment intent (User only)
+router.post('/create-payment-intent', authenticate, requireRole('user'), async (req, res) => {
   try {
-    const { amount } = req.body;
+    const stripeClient = getStripe();
+    if (!stripeClient) {
+      return res.status(503).json({ message: 'Payment service is not configured' });
+    }
 
-    // Validate amount
+    const { amount, orderId } = req.body;
+
     if (!amount || amount <= 0) {
       return res.status(400).json({ message: 'Invalid amount' });
     }
 
-    // Convert amount to cents (Stripe uses smallest currency unit)
-    // Amount is in PKR, but we use USD for Stripe (PKR requires special account setup)
-    const amountInCents = Math.round(amount * 100);
+    if (orderId) {
+      const order = await Order.findById(orderId);
+      if (!order) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+      if (order.userId.toString() !== req.user.id) {
+        return res.status(403).json({ message: 'Forbidden' });
+      }
+      if (order.status !== 'confirmed') {
+        return res.status(400).json({ message: 'Order is not ready for payment' });
+      }
+      if (Math.abs(order.totalAmount - amount) > 0.01) {
+        return res.status(400).json({ message: 'Amount does not match order total' });
+      }
+    }
 
-    console.log(`Creating payment intent for Rs. ${amount} (${amountInCents} cents)`);
+    const amountInSmallestUnit = toStripeAmount(amount);
+    const currency = getStripeCurrency();
 
-    // Create payment intent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amountInCents,
-      currency: 'usd', // Using USD for testing (change to 'pkr' if you have proper Stripe account setup)
+    const paymentIntent = await stripeClient.paymentIntents.create({
+      amount: amountInSmallestUnit,
+      currency,
       payment_method_types: ['card'],
       metadata: {
         description: 'Food Order Payment',
+        orderId: orderId || '',
+        userId: req.user.id,
         originalCurrency: 'PKR',
-        originalAmount: amount.toString()
-      }
+        originalAmount: amount.toString(),
+      },
     });
-
-    console.log('✅ Payment intent created:', paymentIntent.id);
 
     res.json({
       clientSecret: paymentIntent.client_secret,
-      paymentIntentId: paymentIntent.id
+      paymentIntentId: paymentIntent.id,
+      currency,
     });
   } catch (error) {
-    console.error('❌ Payment intent error:', error.message);
-    res.status(500).json({ 
-      message: 'Failed to create payment intent',
-      error: error.message 
-    });
+    console.error('Payment intent error:', error.message);
+    res.status(500).json({ message: 'Failed to create payment intent' });
   }
 });
 
-// Verify payment
-router.post('/verify-payment', async (req, res) => {
+// Verify payment and mark order as paid (User only)
+router.post('/verify-payment', authenticate, requireRole('user'), async (req, res) => {
   try {
-    const { paymentIntentId } = req.body;
+    const stripeClient = getStripe();
+    if (!stripeClient) {
+      return res.status(503).json({ message: 'Payment service is not configured' });
+    }
+
+    const { paymentIntentId, orderId } = req.body;
 
     if (!paymentIntentId) {
       return res.status(400).json({ message: 'Payment intent ID is required' });
     }
+    if (!orderId) {
+      return res.status(400).json({ message: 'Order ID is required' });
+    }
 
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+    if (order.userId.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Forbidden' });
+    }
+    if (order.status !== 'confirmed') {
+      return res.status(400).json({ message: 'Order is not ready for payment' });
+    }
 
-    console.log('✅ Payment verified:', paymentIntent.id, 'Status:', paymentIntent.status);
+    const paymentIntent = await stripeClient.paymentIntents.retrieve(paymentIntentId);
+
+    if (paymentIntent.status !== 'succeeded') {
+      return res.status(400).json({ message: 'Payment not completed', status: paymentIntent.status });
+    }
+
+    if (paymentIntent.metadata.userId !== req.user.id) {
+      return res.status(403).json({ message: 'Payment does not belong to this user' });
+    }
+    if (paymentIntent.metadata.orderId && paymentIntent.metadata.orderId !== orderId) {
+      return res.status(400).json({ message: 'Payment does not match this order' });
+    }
+
+    const expectedAmount = toStripeAmount(order.totalAmount);
+    if (paymentIntent.amount !== expectedAmount) {
+      return res.status(400).json({ message: 'Payment amount mismatch' });
+    }
+
+    order.status = 'paid';
+    await order.save();
 
     res.json({
       status: paymentIntent.status,
-      amount: paymentIntent.amount / 100,
-      currency: paymentIntent.currency
+      orderId: order._id,
+      orderStatus: order.status,
     });
   } catch (error) {
-    console.error('❌ Payment verification error:', error.message);
-    res.status(500).json({ 
-      message: 'Failed to verify payment',
-      error: error.message 
-    });
-  }
-});
-
-// Webhook endpoint for Stripe events (optional, for production)
-router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
-  const sig = req.headers['stripe-signature'];
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-  if (!webhookSecret) {
-    console.warn('⚠️ WARNING: STRIPE_WEBHOOK_SECRET not set');
-    return res.status(400).send('Webhook secret not configured');
-  }
-
-  try {
-    const event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
-
-    // Handle the event
-    switch (event.type) {
-      case 'payment_intent.succeeded':
-        const paymentIntent = event.data.object;
-        console.log('✅ PaymentIntent succeeded:', paymentIntent.id);
-        break;
-      case 'payment_intent.payment_failed':
-        const failedPayment = event.data.object;
-        console.log('❌ PaymentIntent failed:', failedPayment.id);
-        break;
-      default:
-        console.log(`Unhandled event type: ${event.type}`);
-    }
-
-    res.json({ received: true });
-  } catch (err) {
-    console.error('❌ Webhook error:', err.message);
-    res.status(400).send(`Webhook Error: ${err.message}`);
+    console.error('Payment verification error:', error.message);
+    res.status(500).json({ message: 'Failed to verify payment' });
   }
 });
 
 module.exports = router;
+module.exports.getStripe = getStripe;
+module.exports.getStripeCurrency = getStripeCurrency;

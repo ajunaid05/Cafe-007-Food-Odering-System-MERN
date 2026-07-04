@@ -514,3 +514,34 @@
     padding: 25px 20px;
   }
 }
+
+/* ── Cart badge ── */
+.nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cart-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  background: linear-gradient(135deg, #c7a878, #d4b88d);
+  color: #0a0e0d;
+  font-size: 0.7rem;
+  font-weight: 700;
+  border-radius: 10px;
+  line-height: 1;
+  box-shadow: 0 2px 8px rgba(199, 168, 120, 0.5);
+  animation: pulse 1.5s ease-in-out 1;
+}
+
+/* ── home-link as a button ── */
+button.home-link {
+  cursor: pointer;
+  background: linear-gradient(135deg, #c7a878 0%, #d4b88d 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
