@@ -1,6 +1,6 @@
 const dns = require('dns');
 
-// Optional: avoid weird DNS resolution issues
+// Avoid weird DNS resolution issues
 dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 const express = require('express');
@@ -28,7 +28,8 @@ app.use('/api/payment/webhook', require('./routes/stripeWebhook'));
 ========================= */
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://cafe-007-food-odering-system-mern.vercel.app"
+  "https://cafe-007-food-odering-system-mern.vercel.app",
+  "https://cafe-007-food-ordering-system-mern-fe5q4r8e5-ajunaid05s-projects.vercel.app"
 ];
 
 app.use(cors({
@@ -78,18 +79,15 @@ app.use('/api/orders', require('./routes/orderRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/payment', require('./routes/paymentRoutes'));
 
-/* =========================
-   HEALTH CHECK
-========================= */
+  // HEALTH CHECK
+
 app.get('/', (req, res) => {
   res.json({
     message: 'Food Ordering API is running 🚀'
   });
 });
 
-/* =========================
-   START SERVER
-========================= */
+// START SERVER 
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
